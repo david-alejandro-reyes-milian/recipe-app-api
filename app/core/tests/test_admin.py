@@ -2,8 +2,6 @@ from django.contrib.auth import get_user_model
 from django.contrib.auth.models import User
 from django.test import TestCase, Client
 from django.urls import reverse
-from rest_framework import reverse
-from rest_framework.reverse import reverse
 
 from core.models import User
 
