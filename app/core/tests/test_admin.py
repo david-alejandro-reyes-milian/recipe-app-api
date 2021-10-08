@@ -1,11 +1,10 @@
 from django.contrib.auth import get_user_model
-from django.contrib.auth.models import User
 from django.test import TestCase, Client
 from django.urls import reverse
 
-from core.models import User
+from core.models import User as UserModel
 
-User: User = get_user_model()
+User: UserModel = get_user_model()
 
 
 class AdminSiteTests(TestCase):
