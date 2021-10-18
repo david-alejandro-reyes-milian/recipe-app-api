@@ -4,8 +4,8 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APIClient
 
-from core.models import Tag, Ingredient
-from recipe.serializers import TagSerializer, IngredientSerializer
+from core.models import Ingredient
+from recipe.serializers import IngredientSerializer
 
 INGREDIENT_URL = reverse('recipe:ingredient-list')
 
