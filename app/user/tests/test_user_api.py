@@ -8,6 +8,7 @@ from rest_framework.test import APIClient
 from core.models import User as UserModel
 
 CREATE_USER_URL = reverse('user:create')
+ME_URL = reverse('user:me')
 CREATE_TOKEN_URL = reverse('user:token')
 User: UserModel = get_user_model()
 
@@ -95,3 +96,48 @@ class PublicUserApiTests(TestCase):
         )
         self.assertNotIn('token', res.data)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_retrieve_user_unauthorized(self):
+        res: Response = self.client.get(ME_URL)
+        self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
+
+
+class PrivateUserApiTests(TestCase):
+    def setUp(self) -> None:
+        self.user = create_user(
+            email="email@email.com",
+            password="password",
+            name="testuser",
+        )
+
+        self.client = APIClient()
+        self.client.force_authenticate(user=self.user)
+
+    def test_retrieve_profile_user(self):
+        res = self.client.get(ME_URL)
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
+
+        self.assertEqual(res.data, {
+            'name': self.user.name,
+            'email': self.user.email
+        })
+
+    def test_post_me_not_allowed(self):
+        res = self.client.post(ME_URL, {})
+        self.assertEqual(res.status_code, status.HTTP_405_METHOD_NOT_ALLOWED)
+
+    def test_update_user_profile(self):
+        payload = {
+            'email': 'email@email.com',
+            'password': 'newwpassword',
+            'name': 'newname'
+        }
+        res = self.client.patch(ME_URL, payload)
+
+        self.user.refresh_from_db()
+
+        self.assertEqual(self.user.name, payload['name'])
+        self.assertEqual(self.user.email, payload['email'])
+        self.assertTrue(self.user.check_password(payload['password']))
+
+        self.assertEqual(res.status_code, status.HTTP_200_OK)
