@@ -1,7 +1,6 @@
 from rest_framework import viewsets, mixins
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.permissions import IsAuthenticated
-from rest_framework.viewsets import ModelViewSet
 
 from core.models import Tag, Ingredient, Recipe
 from recipe import serializers
@@ -44,3 +43,6 @@ class RecipeViewSet(viewsets.ModelViewSet):
         if self.action == 'retrieve':
             return serializers.RecipeDetailSerializer
         return serializers.RecipeSerializer
+
+    def perform_create(self, serializer):
+        serializer.save(user=self.request.user)
