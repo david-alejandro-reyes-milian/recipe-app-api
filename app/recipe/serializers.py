@@ -1,3 +1,4 @@
+from PIL import ImageSequence
 from rest_framework import serializers
 
 from core.models import Tag, Ingredient, Recipe
@@ -44,6 +45,13 @@ class RecipeDetailSerializer(RecipeSerializer):
         model = Recipe
         fields = (
             'id', 'title', 'time_minutes',
-            'price', 'link', 'ingredients', 'tags'
+            'price', 'link', 'ingredients', 'tags', 'image'
         )
+        read_only = ('id',)
+
+
+class RecipeImageSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Recipe
+        fields = ('id', 'image')
         read_only = ('id',)
