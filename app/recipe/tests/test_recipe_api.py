@@ -51,6 +51,7 @@ class PublicRecipeApiTests(TestCase):
         self.assertEqual(res.status_code, status.HTTP_401_UNAUTHORIZED)
 
 
+# noinspection DuplicatedCode
 class PrivateRecipeApiTests(TestCase):
     def setUp(self) -> None:
         self.user = get_user_model().objects.create_user(
@@ -198,6 +199,42 @@ class PrivateRecipeApiTests(TestCase):
         file_path = models.recipe_image_file_path(None, 'myimage.jpg')
         exp_path = f'uploads/recipe/{uuid}.jpg'
         self.assertEqual(file_path, exp_path)
+
+    def test_filter_recipe_by_tag(self):
+        recipe1 = sample_recipe(self.user, title='Thai')
+        recipe2 = sample_recipe(self.user, title='Thai2')
+        tag1 = sample_tag(self.user, 'tag1')
+        tag2 = sample_tag(self.user, 'tag2')
+        recipe1.tags.add(tag1)
+        recipe2.tags.add(tag2)
+        recipe3 = sample_recipe(self.user, title='Thai3')
+
+        res = self.client.get(RECIPE_URL, {'tags': f'{tag1.id},{tag2.id}'})
+        serializer1 = RecipeSerializer(recipe1)
+        serializer2 = RecipeSerializer(recipe2)
+        serializer3 = RecipeSerializer(recipe3)
+
+        self.assertIn(serializer1.data, res.data)
+        self.assertIn(serializer2.data, res.data)
+        self.assertNotIn(serializer3.data, res.data)
+
+    def test_filter_recipe_by_ingredient(self):
+        recipe1 = sample_recipe(self.user, title='Thai')
+        recipe2 = sample_recipe(self.user, title='Thai2')
+        recipe3 = sample_recipe(self.user, title='Thai3')
+        i1 = sample_ingredient(self.user, 'i1')
+        i2 = sample_ingredient(self.user, 'i2')
+        recipe1.ingredients.add(i1)
+        recipe2.ingredients.add(i2)
+
+        res = self.client.get(RECIPE_URL, {'ingredients': f'{i1.id},{i2.id}'})
+        serializer1 = RecipeSerializer(recipe1)
+        serializer2 = RecipeSerializer(recipe2)
+        serializer3 = RecipeSerializer(recipe3)
+
+        self.assertIn(serializer1.data, res.data)
+        self.assertIn(serializer2.data, res.data)
+        self.assertNotIn(serializer3.data, res.data)
 
 
 class RecipeImageUploadTest(TestCase):
