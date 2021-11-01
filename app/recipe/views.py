@@ -1,9 +1,12 @@
+from django.db.models import QuerySet
 from rest_framework import viewsets, mixins, status
 from rest_framework.authentication import TokenAuthentication
 from rest_framework.decorators import action
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
+from setuptools._vendor.more_itertools import recipes
 
+import recipe
 from core.models import Tag, Ingredient, Recipe
 from recipe import serializers
 from recipe.serializers import TagSerializer, IngredientSerializer, RecipeSerializer
@@ -16,7 +19,13 @@ class BaseRecipeAttrViewSet(viewsets.GenericViewSet,
     permission_classes = (IsAuthenticated,)
 
     def get_queryset(self):
-        return self.queryset.filter(user=self.request.user).order_by('-name')
+        assigned_only = bool(int(self.request.query_params.get('assigned_only', 0)))
+        queryset: QuerySet = self.queryset
+
+        if assigned_only:
+            queryset = queryset.filter(recipe__isnull=False)
+
+        return queryset.filter(user=self.request.user).order_by('-name').distinct()
 
     def perform_create(self, serializer):
         serializer.save(user=self.request.user)

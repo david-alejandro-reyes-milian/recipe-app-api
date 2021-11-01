@@ -6,6 +6,7 @@ from rest_framework.test import APIClient
 
 from core.models import Tag
 from recipe.serializers import TagSerializer
+from recipe.tests.test_recipe_api import sample_tag, sample_recipe
 
 TAGS_URL = reverse('recipe:tag-list')
 
@@ -70,3 +71,30 @@ class PrivateTagsApiTests(TestCase):
         payload = {'name': ''}
         res = self.client.post(TAGS_URL, payload)
         self.assertEqual(res.status_code, status.HTTP_400_BAD_REQUEST)
+
+    def test_retrieve_tags_assigned_to_recipe(self):
+        t1 = sample_tag(self.user, 't1')
+        t2 = sample_tag(self.user, 't2')
+        r1 = sample_recipe(self.user)
+        r1.tags.add(t1)
+
+        res = self.client.get(TAGS_URL, {'assigned_only': 1})
+
+        serializer1 = TagSerializer(t1)
+        serializer2 = TagSerializer(t2)
+
+        self.assertIn(serializer1.data, res.data)
+        self.assertNotIn(serializer2.data, res.data)
+
+    def test_retrieve_tags_assigned_unique(self):
+        t1 = sample_tag(self.user, 't1')
+        sample_tag(self.user, 't2')
+
+        r1 = sample_recipe(self.user)
+        r2 = sample_recipe(self.user)
+        r1.tags.add(t1)
+        r2.tags.add(t1)
+
+        res = self.client.get(TAGS_URL, {'assigned_only': 1})
+
+        self.assertEqual(len(res.data), 1)
